@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Flipbook of Wishes for Looseeuu — Upgraded</title>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  /* --- Reset --- */
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:'Poppins',sans-serif;
+    display:flex;align-items:center;justify-content:center;
+    background: radial-gradient(1200px 600px at 10% 20%, #ffecec 0%, transparent 10%),
+                linear-gradient(135deg, #fff4f6 0%, #f3f7ff 100%);
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+  }
+
+  /* --- Container --- */
+  .flipbook-container{
+    width:92%;
+    max-width:880px;
+    height:78vh;
+    max-height:640px;
+    perspective:1600px;
+    position:relative;
+    cursor:grab;
+    user-select:none;
+  }
+  .flipbook-container:active{cursor:grabbing}
+
+  .flipbook{
+    position:relative;
+    width:100%;
+    height:100%;
+    transform-style:preserve-3d;
+  }
+
+  /* --- Page base --- */
+  .page{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    background:linear-gradient(180deg,#fff 0%, #fffefc 100%);
+    border-radius:12px;
+    box-shadow: 0 18px 40px rgba(17,24,39,0.12);
+    padding:28px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    backface-visibility:hidden;
+    transform-origin:left center;
+    transition:transform 0.2s cubic-bezier(.22,.9,.35,1), box-shadow 0.2s;
+    will-change:transform;
+    overflow:hidden;
+  }
+
+  /* slight paper texture-like edge highlight (subtle) */
+  .page::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    border-radius:12px;
+    pointer-events:none;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.02);
+  }
+
+  /* realistic page curl while flipping */
+  .page .inner{
+    position:relative;
+    width:100%;
+    height:100%;
+    border-radius:10px;
+    overflow:hidden;
+  }
+  .page .inner::before{
+    content:'';
+    position:absolute;
+    right:-40%;
+    top:-40%;
+    width:120%;
+    height:120%;
+    background:linear-gradient(120deg, rgba(255,255,255,0.05), rgba(0,0,0,0.02));
+    transform:rotate(-15deg);
+    pointer-events:none;
+  }
+
+  /* flipped state */
+  .page.flipped{
+    transform: rotateY(-180deg);
+    box-shadow: 0 6px 20px rgba(17,24,39,0.09);
+  }
+
+  /* Ensure content remains readable on backface */
+  .page .page-content{
+    width:100%;
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:18px;
+    overflow:hidden;
+    backface-visibility: hidden;
+  }
+
+  /* Fix for the back of the page */
+  .page.flipped .page-content {
+    transform: rotateY(180deg);
+  }
+
+  /* Titles & visuals */
+  .birthday-message{
+    font-family:'Dancing Script',cursive;
+    font-size:3.2rem;
+    color:#e91e63;
+    text-shadow:0 6px 18px rgba(233,30,99,0.08);
+  }
+  .birthday-wishes{font-size:1.25rem;color:#1976d2;margin-top:8px;font-weight:500}
+
+  .cake-icon{font-size:3.4rem; margin-bottom:12px; animation:slowspin 8s linear infinite}
+  @keyframes slowspin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+
+  .page-image{width:180px;height:180px;border-radius:50%;object-fit:cover;border:5px solid rgba(187,222,251,0.9);margin:18px 0}
+
+  .page-title{font-family:'Dancing Script',cursive;font-size:2rem;color:#1976d2;margin-bottom:10px}
+  .page-text{font-size:1.05rem;line-height:1.6;color:#333;max-width:86%}
+
+  .open-button{
+    background:linear-gradient(90deg,#ff80ab,#7c4dff);
+    color:white;border:none;padding:12px 26px;border-radius:40px;font-size:1rem;margin-top:14px;
+    box-shadow:0 6px 18px rgba(124,77,255,0.18);cursor:pointer;font-weight:600
+  }
+  .open-button:active{transform:translateY(1px)}
+
+  /* Page indicator dots */
+  .page-indicator{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);display:flex;gap:10px;z-index:1200}
+  .dot{width:10px;height:10px;border-radius:50%;background:rgba(25,118,210,0.25);cursor:pointer;transition:transform .25s,background .25s}
+  .dot.active{background:#1976d2;transform:scale(1.2)}
+
+  /* LETTER page specifics - CRITICAL FIXES */
+  /* LETTER page specifics - FIXED */
+.letter-content {
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  overflow: auto;
+  text-align: left;
+  padding-right: 10px;
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: #222;
+  background: transparent;
+  position: relative;
+  z-index: 100;
+  /* REMOVE the rotateY and let it display normally */
+  transform: none;
+  backface-visibility: hidden; /* so it doesn't flicker */
+}
+
+  .letter-content p{margin:0 0 14px}
+
+  /* custom scrollbar (webkit) */
+  .letter-content::-webkit-scrollbar{width:8px}
+  .letter-content::-webkit-scrollbar-track{background:transparent}
+  .letter-content::-webkit-scrollbar-thumb{background:linear-gradient(#bbdefb,#90caf9);border-radius:999px}
+
+  /* small responsive adjustments */
+  @media (max-width:768px){
+    .birthday-message{font-size:2.4rem}
+    .page-image{width:140px;height:140px}
+    .page-title{font-size:1.6rem}
+  }
+
+  /* Background decor (lightweight animations) */
+  .decor {
+    position:absolute;inset:0;pointer-events:none;z-index:-1;
+    background-image:
+      radial-gradient(circle at 10% 20%, rgba(255,205,210,0.12) 0 180px, transparent 180px),
+      radial-gradient(circle at 85% 80%, rgba(187,222,251,0.10) 0 200px, transparent 200px);
+  }
+
+  /* Music toggle */
+  .music-toggle{
+    position:absolute;top:18px;right:18px;width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:rgba(255,255,255,0.8);z-index:1500;box-shadow:0 6px 18px rgba(17,24,39,0.08);cursor:pointer
+  }
+  .music-toggle i{color:#d81b60;font-size:20px}
+
+</style>
+</head>
+<body>
+  <div class="decor"></div>
+
+  <!-- Music toggle -->
+  <button class="music-toggle" id="musicToggle" aria-label="Toggle music">
+    <i id="musicIcon" class="fas fa-volume-off"></i>
+  </button>
+
+  <!-- Audio: soft piano melody (attempt autoplay; will also start on first gesture) -->
+  <!-- Note: if browser blocks autoplay, music will start after first user interaction (open or any touch) -->
+  <audio id="backgroundMusic" loop preload="auto">
+    <!-- You can replace the src URL with any soft piano mp3 you prefer. -->
+    <source src="c:\Users\priya\Downloads\happy-birthday-254480.mp3" type="audio/mpeg">
+    Your browser does not support audio.
+  </audio>
+
+  <!-- Page flip sound (paper) -->
+  <audio id="pageFlipSound" preload="auto">
+    <source src="https://assets.mixkit.co/sfx/preview/mixkit-paper-page-turn-1042.mp3" type="audio/mpeg">
+  </audio>
+
+  <div class="flipbook-container" id="flipbookContainer" role="application" aria-label="Flipbook of Wishes">
+    <div class="flipbook" id="flipbook">
+      <!-- Page 0: Cover -->
+      <div class="page" data-page="0" style="z-index:5">
+        <div class="inner">
+          <div class="page-content">
+            <div class="cake-icon">🎂</div>
+            <h1 class="birthday-message">
+              Happy Birthday
+            </h1>
+            <div class="birthday-wishes">For my favorite chaos, Looseeuu 💙</div>
+            <img class="page-image" src="loose1.jpg" alt="Looseeuu">
+            <button class="open-button" id="openButton">Tap to open the flipbook</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Page 1 -->
+      <div class="page flipped" data-page="1" style="z-index:4">
+        <div class="inner">
+          <div class="page-content">
+            <h2 class="page-title">How it started 💫</h2>
+            <img class="page-image" src="loose2.jpg" alt="Memory">
+            <p class="page-text">It's crazy how someone miles away became so close so fast. You were just a random chat that turned into one of my favorite people.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Page 2 -->
+      <div class="page flipped" data-page="2" style="z-index:3">
+        <div class="inner">
+          <div class="page-content">
+            <h2 class="page-title">Our Distance, Our Bond 🌍</h2>
+            <img class="page-image" src="loose3.jpg" alt="Distance">
+            <p class="page-text">Who cares about kilometers when vibes match this perfectly? You make distance feel like nothing.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Page 3 (LETTER) - MOVED LETTER HERE -->
+      <div class="page flipped" data-page="3" style="z-index:2">
+        <div class="inner">
+          <div class="page-content">
+            <h2 class="page-title">Dear Looseeuu,</h2>
+            <div class="letter-content" id="letterContent" tabindex="0" role="document">
+              <p>Happyyy Birthdayyy my crazy friend!! 🎉🎂</p>
+              <p>First of all, can you believe we became this close in such a short time? You literally came into my life so late, but still managed to become one of the most important people. Like seriously, how did that even happen? 😭😂</p>
+              <p>Even though we're from different states and speak in English that sometimes doesn't even make sense 😅, somehow we understand each other perfectly. That's what makes our friendship so special — it's pure chaos, full of laughter, teasing, and random deep talks at the weirdest times 😆</p>
+              <p>You always make things lighter with your jokes (and your "loose" brain 😜). But honestly, you're such a genuine person—fun, caring, and always there when I need someone to talk to. I might tease you a lot, but I actually appreciate you more than I say.</p>
+              <p>Thank you for being that unexpected friend who turned into someone I can't imagine my days without. You've made my life a little brighter (and definitely noisier 😂).</p>
+              <p>So on your special day, I just want you to smile big, laugh louder, and eat a lot of cake (send me some too okay 😋). You deserve all the happiness in the world, looseeuu.</p>
+              <p>Once again, Happy Birthday! 🎈<br>Don't ever change, stay the same crazy, funny, and kind person you are.</p>
+              <p>With lots of love (and endless teasing),<br>Your queen😁💛</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Page 4 (FINAL PAGE) -->
+      <div class="page" data-page="4" style="z-index:1">
+        <div class="inner">
+          <div class="page-content">
+            <h2 class="page-title">You're my favorite kind of crazy 😜</h2>
+            <img class="page-image" src="loose4.jpg" alt="Crazy">
+            <p class="page-text">Somehow we understand each other even when we don't make sense — that's our magic, Looseeuu.</p>
+            <p class="page-text" style="margin-top: 20px; font-size: 1.2rem; color: #e91e63;">Happy Birthday once again! 🎉</p>
+          </div>
+        </div>
+      </div>
+
+    </div> <!-- /.flipbook -->
+
+    <div class="page-indicator" id="pageIndicator">
+      <div class="dot active" data-page="0"></div>
+      <div class="dot" data-page="1"></div>
+      <div class="dot" data-page="2"></div>
+      <div class="dot" data-page="3"></div>
+      <div class="dot" data-page="4"></div>
+    </div>
+
+  </div><!-- /.flipbook-container -->
+
+<script>
+/* Optimized flipbook JS
+   - Fast 0.2s page transitions
+   - Fixed letter visibility on 4th page
+   - Simplified gesture handling
+*/
+
+document.addEventListener('DOMContentLoaded', () => {
+  const flipbook = document.getElementById('flipbook');
+  const pages = Array.from(document.querySelectorAll('.page'));
+  const openButton = document.getElementById('openButton');
+  const bgMusic = document.getElementById('backgroundMusic');
+  const pageFlipSound = document.getElementById('pageFlipSound');
+  const musicToggle = document.getElementById('musicToggle');
+  const musicIcon = document.getElementById('musicIcon');
+  const dots = Array.from(document.querySelectorAll('.dot'));
+  const container = document.getElementById('flipbookContainer');
+
+  let currentPage = 0; // 0..4
+  let isDragging = false;
+  let startX = 0;
+  let musicPlaying = false;
+
+  // ===== initialize z-index and flipped state
+  function setZIndices() {
+    // topmost should be page 0 when unflipped; we ensure proper stacking:
+    pages.forEach((p, i) => {
+      // base z so cover has highest initial z
+      const base = pages.length - i;
+      p.style.zIndex = base;
+    });
+  }
+
+  // Ensure initial flipped states: only cover (index 0) not flipped
+  pages.forEach((p, i) => {
+    if (i === 0) p.classList.remove('flipped');
+    else p.classList.add('flipped');
+  });
+  setZIndices();
+  updateDots();
+
+  // ===== Music controls =====
+  function tryPlayMusic() {
+    bgMusic.volume = 0.6;
+    bgMusic.play().then(() => {
+      musicPlaying = true;
+      musicIcon.className = 'fas fa-volume-up';
+    }).catch(() => {
+      // Autoplay blocked — we'll start on user gesture (open button or first touch)
+      musicPlaying = false;
+      musicIcon.className = 'fas fa-volume-off';
+    });
+  }
+
+  // Try autoplay on load (may be blocked)
+  tryPlayMusic();
+
+  musicToggle.addEventListener('click', () => {
+    if (musicPlaying) {
+      bgMusic.pause();
+      musicPlaying = false;
+      musicIcon.className = 'fas fa-volume-off';
+    } else {
+      bgMusic.play().catch(()=>{});
+      musicPlaying = true;
+      musicIcon.className = 'fas fa-volume-up';
+    }
+  });
+
+  // When user taps open, that's a user gesture — ensure music starts then
+  openButton.addEventListener('click', () => {
+    goToPage(1);
+    // Try to start music if blocked earlier
+    if (!musicPlaying) {
+      bgMusic.play().then(()=> {
+        musicPlaying = true;
+        musicIcon.className = 'fas fa-volume-up';
+      }).catch(()=>{ /* still blocked */ });
+    }
+  });
+
+  // ===== Page navigation core =====
+  function playFlipSound() {
+    try {
+      pageFlipSound.currentTime = 0;
+      pageFlipSound.volume = 0.85;
+      pageFlipSound.play();
+    } catch(e) { /* ignore */ }
+  }
+
+  function goToPage(target) {
+    target = Math.max(0, Math.min(pages.length - 1, target));
+    if (target === currentPage) return;
+
+    // forward: add flipped to pages from current to target-1
+    if (target > currentPage) {
+      for (let i = currentPage; i < target; i++) {
+        pages[i].classList.add('flipped');
+      }
+    } else {
+      // backward: remove flipped from pages target..current-1
+      for (let i = currentPage - 1; i >= target; i--) {
+        pages[i].classList.remove('flipped');
+      }
+    }
+
+    // play sound immediately for better sync
+    playFlipSound();
+
+    currentPage = target;
+    updateDots();
+    adjustZAfterFlip();
+  }
+
+  function nextPage() { if (currentPage < pages.length - 1) goToPage(currentPage + 1); }
+  function prevPage() { if (currentPage > 0) goToPage(currentPage - 1); }
+
+  // Update dot indicators
+  function updateDots() {
+    dots.forEach((d, idx) => {
+      d.classList.toggle('active', idx === currentPage);
+    });
+  }
+
+  // After flipping, adjust z so the current "open" page stack looks natural
+  function adjustZAfterFlip() {
+  // Ensure last page (index 4) starts unflipped
+pages[pages.length - 1].classList.remove('flipped');
+
+    // Higher z for smaller page index (cover front) to preserve book layering
+    pages.forEach((p, i) => {
+      // If page is flipped (rotated away), push it behind
+      if (p.classList.contains('flipped')) {
+        p.style.zIndex = 1 + (pages.length - i); // behind
+      } else {
+        p.style.zIndex = 100 + (pages.length - i); // front
+      }
+    });
+  }
+
+  // call once to set initial stacking
+  adjustZAfterFlip();
+
+  // Dot click nav
+  dots.forEach((dot, idx) => {
+    dot.addEventListener('click', () => goToPage(idx));
+  });
+
+  // ===== Simplified gesture handling =====
+  function getClientX(e) {
+    if (e.touches && e.touches[0]) return e.touches[0].clientX;
+    return e.clientX;
+  }
+
+  function startDrag(e) {
+    // If letter content is scrollable and user clicked inside it, do not start page drag
+    const target = e.target;
+    if (target.closest && target.closest('.letter-content')) return;
+
+    isDragging = true;
+    startX = getClientX(e);
+  }
+
+  function endDrag(e) {
+    if (!isDragging) return;
+    isDragging = false;
+
+    const endX = getClientX(e);
+    const diff = endX - startX;
+    const threshold = Math.min(window.innerWidth * 0.07, 60); // adaptive threshold
+    
+    if (Math.abs(diff) > threshold) {
+      if (diff > 0) prevPage();
+      else nextPage();
+    }
+  }
+
+  // mouse
+  container.addEventListener('mousedown', startDrag);
+  document.addEventListener('mouseup', endDrag);
+  
+  // touch
+  container.addEventListener('touchstart', startDrag, {passive:true});
+  container.addEventListener('touchend', endDrag);
+
+  // keyboard accessibility: left/right arrows
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') prevPage();
+    if (e.key === 'ArrowRight') nextPage();
+  });
+
+  // Accessibility: if user focuses letter and swipes, ensure that scroll works
+  const letter = document.getElementById('letterContent');
+  if (letter) {
+    letter.addEventListener('touchstart', (e) => {
+      // stop propagation so container doesn't start drag when user intends to scroll letter
+      e.stopPropagation();
+    }, {passive:true});
+  }
+
+  // If user interacts anywhere (touch or click), ensure music plays (useful if autoplay blocked)
+  function userGestureStart() {
+    if (!musicPlaying) {
+      bgMusic.play().then(()=> {
+        musicPlaying = true;
+        musicIcon.className = 'fas fa-volume-up';
+      }).catch(()=>{});
+    }
+    // remove once fired
+    document.removeEventListener('touchstart', userGestureStart);
+    document.removeEventListener('click', userGestureStart);
+  }
+  document.addEventListener('touchstart', userGestureStart, {passive:true});
+  document.addEventListener('click', userGestureStart);
+
+  // make sure page flip sound plays even when user flips by dots
+  dots.forEach(d => d.addEventListener('click', playFlipSound));
+});
+</script>
+</body>
+</html>
